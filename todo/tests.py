@@ -3,6 +3,7 @@ from django.utils import timezone
 from datetime import datetime
 from todo.models import Task
 
+
 # Create your tests here.
 class sampleTestCase(TestCase):
     def test_sample1(self):
@@ -51,6 +52,7 @@ class TaskModelTestCase(TestCase):
         task.save()
 
         self.assertFalse(task.is_overdue(current))
+
 
 class TodoViewTestCase(TestCase):
     def test_index_get(self):
