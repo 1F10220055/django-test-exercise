@@ -6,11 +6,12 @@
     <title>To Do Application</title>
     <meta charset="UTF-8">
     <meta name="author" content="INIAD">
+    <link rel="stylesheet" href="{%static 'todo/style.css' %}">
   </head>
 
   <body>
     <h1>{{ task.title }}</h1>
-    <ul>
+    <ul class="text">
       <li>Posted at: {{ task.posted_at }}</li>
       {% if task.due_at %}
       <li>Due at: {{ task.due_at }}</li>
