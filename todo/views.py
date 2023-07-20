@@ -79,40 +79,44 @@ def close(request, task_id):
     return redirect(index)
 
 
-def parse(response: str):
-    json_string = response.split("```json")[1].strip().split("```")[0].strip()
-    data = json.loads(json_string)
-    text = data.get("saying")
-    return text
-
-
 def saying(request):
     if request.method != "GET":
         return JsonResponse({"error": "GET method only"}, status=400)
 
+    functions = [
+        {
+            "name": "send_saying",
+            "description": "オリジナル格言を送信する",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "saying": {
+                        "type": "string",
+                        "description": "格言"
+                    }
+                },
+                "required": ["saying"]
+            }
+        }
+    ]
+
     if openai.api_key is None:
         return JsonResponse({"saying": "格言かもしれない"}, status=200)
 
-    system_message = """The output should be a markdown code snippet formatted in the following schema:
-
-```json
-{
-    saying: str, // "saying in Japanese"
-}
-```"""
-
-    completion = openai.ChatCompletion.create(
+    response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[{
-            "role": "system",
-            "content": system_message,
-        }, {
             "role": "user",
-            "content": "格言を生成してください。"
+            "content": "オリジナル格言を送信してください。"
         }],
+        functions=functions,
+        function_call={"name": "send_saying"},
     )
 
-    response = completion["choices"][0]["message"]["content"]
-    message = parse(response)
-    
-    return JsonResponse({"saying": message}, status=200)
+    message = response["choices"][0]["message"]
+    if message.get("function_call"):
+        arguments = json.loads(message["function_call"]["arguments"])
+        saying = arguments.get("saying")
+        if saying:
+            return JsonResponse({"saying": saying}, status=200)
+    return JsonResponse({"saying": "格言かもしれない"}, status=200)
