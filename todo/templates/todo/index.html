@@ -10,6 +10,7 @@
 
   <body>
     <h1>Sample To Do Application</h1>
+    <h2 id="saying">...</h2>
     <p>You can submit tasks from the following form.</p>
     <form action="{% url 'index' %}" method="post">
       {% csrf_token %}
@@ -53,6 +54,15 @@
     <div>
       <iframe width="560" height="315" src="https://www.youtube.com/embed/Y4mXTna0o7k" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </div>
+
+    <script>
+      const saying = document.getElementById('saying');
+      fetch({% url 'saying' %}).then((response) => {
+        return response.json();
+      }).then((data) => {
+        saying.textContent = data.saying;
+      });
+    </script>
   </body>
 
 </html>
