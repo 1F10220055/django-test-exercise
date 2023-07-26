@@ -1,9 +1,15 @@
 from django.shortcuts import render, redirect
 from django.http import Http404
+from django.http.response import JsonResponse
 from django.utils.timezone import make_aware
 from django.utils.dateparse import parse_datetime
 from todo.models import Task
+import os
+import openai
+import json
 
+openai.api_key = os.environ.get("OPENAI_API_KEY")
+openai.api_base = "https://api.openai.iniad.org/api/v1"
 
 # Create your views here.
 def index(request):
@@ -71,3 +77,46 @@ def close(request, task_id):
     task.completed = True
     task.save()
     return redirect(index)
+
+
+def saying(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "GET method only"}, status=400)
+
+    functions = [
+        {
+            "name": "send_saying",
+            "description": "オリジナル格言を送信する",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "saying": {
+                        "type": "string",
+                        "description": "格言"
+                    }
+                },
+                "required": ["saying"]
+            }
+        }
+    ]
+
+    if openai.api_key is None:
+        return JsonResponse({"saying": "格言かもしれない"}, status=200)
+
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo",
+        messages=[{
+            "role": "user",
+            "content": "オリジナル格言を送信してください。"
+        }],
+        functions=functions,
+        function_call={"name": "send_saying"},
+    )
+
+    message = response["choices"][0]["message"]
+    if message.get("function_call"):
+        arguments = json.loads(message["function_call"]["arguments"])
+        saying = arguments.get("saying")
+        if saying:
+            return JsonResponse({"saying": saying}, status=200)
+    return JsonResponse({"saying": "格言かもしれない"}, status=200)
